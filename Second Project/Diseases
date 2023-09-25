@@ -1,0 +1,53 @@
+import numpy as np
+
+class Desease:
+    """
+    Implementation of the desease
+    """
+    # Carmen: class structure
+    def __init__(self, L=300, T=1, q=2, J=1, cs=False):
+        # parameters
+        self.T = 12  #Months
+        self.S = 100
+        self.I = 100
+        self.R = 100
+        self.N_SIS = self.S + self.I 
+        self.N_SIR = self.S + self.I + self.R
+        self.alpha = 1
+        self.beta = 1
+        self.gamma = 1
+
+        self.SIS_S_RK_result = np.empty(self.T)
+        self.SIS_I_RK_result = np.empty(self.T)
+        self.SIS_R_RK_result = np.empty(self.T)
+
+        self.SIS_S_Euler_result = np.empty(self.T)
+        self.SIS_I_Euler_result = np.empty(self.T)
+        self.SIS_R_Euler_result = np.empty(self.T)
+
+        self.SIR_S_RK_result = np.empty(self.T)
+        self.SIR_I_RK_result = np.empty(self.T)
+        self.SIR_R_RK_result = np.empty(self.T)
+
+        self.SIR_S_Euler_result = np.empty(self.T)
+        self.SIR_I_Euler_result = np.empty(self.T)
+        self.SIR_R_Euler_result = np.empty(self.T)
+
+        self.SIR_travel_S_RK_result = np.empty(self.T)
+        self.SIR_travel_I_RK_result = np.empty(self.T)
+        self.SIR_travel_R_RK_result = np.empty(self.T)
+
+        self.SIR_travel_S_Euler_result = np.empty(self.T)
+        self.SIR_travel_I_Euler_result = np.empty(self.T)
+        self.SIR_travel_R_Euler_result = np.empty(self.T)
+
+        # vector for S, I R
+
+    def SIS_model(self):
+            dpeopledt = np.array([[self.beta*S*I/N -self.alphaI], [self.beta*S*I/N + self.alpha*I]])
+
+        return dpeopledt
+
+    def SIR_model():
+
+    def SIR_model_travel():

@@ -36,7 +36,6 @@ def SIT_model(t, pop):
 def RungeKuttaStep(t, y, h, model): #y == pop
     # Overall of people:
     n = sum(y) ## Number of people has to stay the same all time
-    print(n)
 
     # ALgorithm stops if overall population changes (TODO: maybe has to be changed)
     if round(n,0) != N:
@@ -81,7 +80,7 @@ def RungeKuttaLoop(t0, y0, h, T, model = SIS_model):
 
 # Inital conditions 
 t0 = 0
-population_0 = np.array([7E6,100,0]) # inital population
+population_0 = np.array([7E6,100,0]) # inital population [S0, I0, R0]
 h = 1 # step size [days]
 T = 200 # whole time [days]
 

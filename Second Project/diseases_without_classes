@@ -7,10 +7,9 @@ alpha = 1/9
 beta = 0.21
 gamma = 0
 
-# Transport matrix:
+# Transport matrix: [here as in Jakobs example]
 #W = np.array([[0,0.53,2.4],[0.93,0,0.3],[8.2,0.58,0]])*10E-4
 #print(W)
-
 
 
 ########## Equations for models (You can see that I wrote the equations into a Numpy array i.e. [dS/dT, dI/dt, dR/dt] = [equation 1, equation 2, equation 3]  
@@ -21,11 +20,11 @@ def SIS_model(t, pop):
     return np.array([-beta*pop[0]*pop[1]/N + alpha*pop[1], beta*pop[0]*pop[1]/N  - alpha*pop[1], 0]) # added a zero as third place to prepare for three variables for the other models and generalize runge kutta
 
 ## SIR model:
-def SIR_model(t0, pop):
+def SIR_model(t, pop):
     return np.array([-beta*pop[0]*pop[1]/N + gamma*pop[0], beta*pop[0]*pop[1]/N  - alpha*pop[1], gamma*pop[0] + alpha*pop[1]])
 
 ## SIR model with travel:
-def SIT_model(t0, pop):
+def SIT_model(t, pop):
         return #TO DO
 
 

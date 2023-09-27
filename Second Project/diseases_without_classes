@@ -46,7 +46,7 @@ def RungeKuttaStep(t, y, h, model): #y == pop
     k1 = model(t, y) 
     k2 = model(t + h/2, y + k1*h/2)
     k3 = model(t + h/2, y + k2*h/2)
-    k4 = model(t + h, y + k3*h/2)
+    k4 = model(t + h, y + k3*h)
 
     # average slope
     K = 1/6*(k1 + 2.0*k2 + 2.0*k3 + k4)
@@ -90,7 +90,7 @@ global N
 N = round(sum(population_0), 0)
 
 # Start Runge Kutta
-t, Population  = RungeKuttaLoop(t0, population_0, h, T, SIR_model)
+t, Population  = RungeKuttaLoop(t0, population_0, h, T, SIS_model)
 
 
 

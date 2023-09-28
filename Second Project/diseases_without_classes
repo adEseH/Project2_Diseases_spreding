@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 
 
 # Parameters (global): 
-alpha = 1/9
-beta = 0.21
-gamma = 0
+alpha = 1/5
+beta = 1.72*1/5
+gamma = 0.0006
 
 # Transport matrix: [here as in Jakobs example]
 #W = np.array([[0,0.53,2.4],[0.93,0,0.3],[8.2,0.58,0]])*10E-4
@@ -21,7 +21,7 @@ def SIS_model(t, pop):
 
 ## SIR model:
 def SIR_model(t, pop):
-    return np.array([-beta*pop[0]*pop[1]/N + gamma*pop[0], beta*pop[0]*pop[1]/N  - alpha*pop[1], gamma*pop[0] + alpha*pop[1]])
+    return np.array([-beta*pop[0]*pop[1]/N - gamma*pop[0], beta*pop[0]*pop[1]/N  - alpha*pop[1], gamma*pop[0] + alpha*pop[1]])
 
 ## SIR model with travel:
 def SIT_model(t, pop):
@@ -36,11 +36,11 @@ def SIT_model(t, pop):
 def RungeKuttaStep(t, y, h, model): #y == pop
     # Overall of people:
     n = sum(y) ## Number of people has to stay the same all time
-
+    print(n)
     # ALgorithm stops if overall population changes (TODO: maybe has to be changed)
-    if round(n,0) != N:
-         print('Population number changed')
-         exit()
+    #if round(n,0) != N:
+    #     print('Population number changed')
+    #     exit()
 
     # Calculation of slopes (k_i are 1 X 3 vectors, where the last row is always zero in case of SIS model) 
     k1 = model(t, y) 
@@ -80,7 +80,7 @@ def RungeKuttaLoop(t0, y0, h, T, model = SIS_model):
 
 # Inital conditions 
 t0 = 0
-population_0 = np.array([7E6,100,0]) # inital population [S0, I0, R0]
+population_0 = np.array([20000000,1,0]) # inital population [S0, I0, R0]
 h = 1 # step size [days]
 T = 200 # whole time [days]
 
@@ -88,9 +88,10 @@ T = 200 # whole time [days]
 # Overall population and for prove if overall population number constant and setting this as overall population (maybe important for errror discussion)
 global N 
 N = round(sum(population_0), 0)
+print(N)
 
 # Start Runge Kutta
-t, Population  = RungeKuttaLoop(t0, population_0, h, T, SIS_model)
+t, Population  = RungeKuttaLoop(t0, population_0, h, T, SIR_model)
 
 
 
@@ -114,7 +115,7 @@ for i in range(1,len(pop_SIS)):
 plt.style.use('rc.mplstyle')
 fig, ax = plt.subplots(figsize = (3,4))
 ax.set_title('Runge Kutta Simulation')
-ax.plot(t_SIS, pop_SIS, label = ['S_theo', 'I_theo', 'R_theo']) #Only for SIS model
+#ax.plot(t_SIS, pop_SIS, label = ['S_theo', 'I_theo', 'R_theo']) #Only for SIS model
 ax.plot(t,Population, label = ['S,', 'I', 'R'])
 ax.set_xlabel('time t')
 ax.set_ylabel('Number individulas')

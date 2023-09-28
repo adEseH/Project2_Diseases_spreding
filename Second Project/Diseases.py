@@ -120,10 +120,6 @@ class Disease:
             print('That model does not exist')
             exit()
         
-        # inital condition and RungeKuttaStep applied n times
-        y0 = self.population_0 #to be consistent with your notation
-        self.y_RK[0] = y0 
-        
         if model == "SIS_model":
             
             # inital condition and RungeKuttaStep applied n times

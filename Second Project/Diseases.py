@@ -34,6 +34,22 @@ class Disease:
             exit()
         self.n = int(self.n)
         
+        #Results
+        self.x = np.linspace(self.t0, self.T, (self.n)+1) #array of times
+        # RK
+        self.y_RK_SIS = np.empty(((self.n)+1,3))
+        self.theo_RK_SIS = np.empty(((self.n)+1,3))
+        self.y_RK_SIR = np.empty(((self.n)+1,3))
+        self.y_RK_SIT = np.empty(((self.n)+1,3))
+        
+        # plain Euler
+        self.y_pEu_SIS = np.empty(((self.n)+1,3))
+        self.y_pEu_SIR = np.empty(((self.n)+1,3))
+        self.y_pEu_SIT = np.empty(((self.n)+1,3))
+        
+        # other Euler TODO
+        
+        
     ########## Equations for models (You can see that I wrote the equations into 
     # a Numpy array i.e. [dS/dT, dI/dt, dR/dt] = [equation 1, equation 2, equation 3]  
     # S = pop[0], I = pop[1], R = pop[2], pop means population
@@ -52,7 +68,7 @@ class Disease:
                          self.gamma*pop[0] + self.alpha*pop[1]])
     
     ## SIR model with travel:
-    def SIT_model(t, pop):
+    def SIT_model(self, t, pop):
             return #TO DO
     
     # Runge Kutta Step (start time, pop, model) 
@@ -104,53 +120,100 @@ class Disease:
             print('That model does not exist')
             exit()
         
-        # arrays for time steps and pop - values
-        x = np.linspace(self.t0, self.T, (self.n)+1)     
-        y = np.empty(((self.n)+1,3))               
-
-        # inital condition and RungeKuttaStep applied N times
+        # inital condition and RungeKuttaStep applied n times
         y0 = self.population_0 #to be consistent with your notation
-        y[0] = y0
+        self.y_RK[0] = y0 
         
-        for i in range(1, (self.n)+1):
-            y[i] = self.RungeKuttaStep(x[i-1], y[i-1], model)
+        if model == "SIS_model":
+            
+            # inital condition and RungeKuttaStep applied n times
+            y0 = self.population_0 #to be consistent with your notation
+            self.y_RK_SIS[0] = y0
+            
+            for i in range(1, (self.n)+1):
+                self.y_RK_SIS[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIS[i-1], model)
+                
+        elif model == "SIR_model":
+            
+            y0 = self.population_0 
+            self.y_RK_SIR[0] = y0
+            
+            for i in range(1, (self.n)+1):
+                self.y_RK_SIR[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIR[i-1], model)
         
-        # Return values
-        return x, y
+        elif model == "SIT_model":
+            
+            y0 = self.population_0 
+            self.y_RK_SIT[0] = y0
+            
+            for i in range(1, (self.n)+1):
+                self.y_RK_SIT[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIT[i-1], model)
+        
     
+        
+    # plain Euler (model)
     def Euler(self, model = "SIS_model"):
+        
         #checking that the model introduced is correct
         if model != "SIS_model" and model != "SIR_model" and model != "SIT_model":
             print('That model does not exist')
             exit()
         
-        # arrays for time steps and pop - values
-        x = np.linspace(self.t0, self.T, (self.n)+1)     
-        y = np.empty(((self.n)+1,3))
-        
-        # inital condition and EulerStep applied N times
-        y0 = self.population_0 #to be consistent with your notation
-        y[0] = y0
-        
-        
         if model == "SIS_model":
+            
+            # inital condition and EulerStep applied n times
+            y0 = self.population_0 #to be consistent with your notation
+            self.y_pEu_SIS[0] = y0
+            
             for i in range(1, (self.n)+1):
-                y[i] = y[i-1] + self.h * self.SIS_model(x[i-1], y[i-1])
+                self.y_pEu_SIS[i] = self.y_pEu_SIS[i-1] + self.h * self.SIS_model(self.x[i-1], self.y_pEu_SIS[i-1])
         
         elif model == "SIR_model":
+            
+            y0 = self.population_0 
+            self.y_pEu_SIR[0] = y0
+            
             for i in range(1, (self.n)+1):
-                y[i] = y[i-1] + self.h * self.SIR_model(x[i-1], y[i-1])
+                self.y_pEu_SIR[i] = self.y_pEu_SIR[i-1] + self.h * self.SIR_model(self.x[i-1], self.y_pEu_SIR[i-1])
         
         elif model == "SIT_model":
-            for i in range(1, (self.n)+1):
-                y[i] = y[i-1] + self.h * self.SIT_model(x[i-1], y[i-1])
-        
-        # Return values
-        return x, y
             
+            y0 = self.population_0 
+            self.y_pEu_SIT[0] = y0
+            
+            for i in range(1, (self.n)+1):
+                self.y_pEu_SIT[i] = self.y_pEu_SIT[i-1] + self.h * self.SIT_model(self.x[i-1], self.y_pEu_SIT[i-1])
         
-    
-    
-    
+            
+    #[] where does this come from? It is a great idea!
+    def Theo_SIS_model(self):
+                        
+        self.theo_RK_SIS[0]  = self.population_0
 
+        I_inf = self.N*(1-self.alpha/self.beta)
+        r = I_inf/self.population_0[1] -1
+        delta = self.beta - self.alpha
+
+        for i in range(1,len(self.theo_RK_SIS)): 
+            I_i = I_inf/(1 + r*np.exp(delta*self.x[i]))
+            self.theo_RK_SIS[i] = [ self.N - I_i, I_i , 0]
+
+ 
+#includes several results in the same figure  
+# xs is a list of x-type lists
+# ys is a list of y-type lists   
+#labels is the list of labels, one label per each line in the plot  
+# xlabel and ylabel refer to the whole plot     
+def plot(xs, ys, labels, title, xlabel, ylabel):
+    plt.style.use('rc.mplstyle')
+    fig, ax = plt.subplots(figsize = (3,4))
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    
+    for line in range(len(xs)):
+        ax.plot(xs[line], ys[line], label = labels[line])
         
+    ax.legend()
+    plt.show()
+    plt.savefig(title)       

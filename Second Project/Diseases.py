@@ -27,7 +27,7 @@ class Disease:
         #Euler & RK parameters
         self.h = h # step size [default: 1 day]
         # Number of timesteps and proof if h_step and overall number gives a whole number of time steps.
-        # [] This used to be in RungeKuttaLoop, but I need it for Euler as well
+        # [X] This used to be in RungeKuttaLoop, but I need it for Euler as well
         self.n = self.T/self.h
         if self.n != int(self.n):                  
             print('Take another overall time pls.')

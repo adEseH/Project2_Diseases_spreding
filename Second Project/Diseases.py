@@ -8,9 +8,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Disease:
-    def __init__(self, a=1/9, b=0.21, g=0, 
-                 W=np.array([[0,0.53,2.4],[0.93,0,0.3],[8.2,0.58,0]])*10E-4,
-                 T=200, pop_0=np.array([7E6,100,0]), h=1 ):
+    def __init__(self, a=1/9, b=[0.21,0.26,0.24], g=[0,0,0], 
+                 W=np.array([[0.0, 5.27324458E-05 ,2.38237046E-04],
+                            [9.28720687E-05 ,0.0 ,2.97796307E-05],
+                            [8.17828665E-04, 5.80450430E-05 ,0.0]]),
+                 T=200, pop_0=np.array([[6.7E6,10,0],[11.8E6,0,0], [23E6,0,0]]), h=1 ):
         
         self.alpha = a
         self.beta = b
@@ -22,8 +24,8 @@ class Disease:
         self.t0 = 0
         self.T = T # total time [default: 200 days]
         self.population_0 = pop_0 # inital population [S0, I0, R0] (y0)
-        self.N = round(np.sum(self.population_0), 0) # Overall population
-        
+        self.N = round(sum(pop_0[0]) +sum(pop_0[1]) +sum(pop_0[2]), 0) # Overall population
+
         #Euler & RK parameters
         self.h = h # step size [default: 1 day]
         # Number of timesteps and proof if h_step and overall number gives a whole number of time steps
@@ -36,15 +38,15 @@ class Disease:
         #Results
         self.x = np.linspace(self.t0, self.T, (self.n)+1) #array of times
         # RK
-        self.y_RK_SIS = np.empty(((self.n)+1,3))
-        self.theo_SIS = np.empty(((self.n)+1,3))
-        self.y_RK_SIR = np.empty(((self.n)+1,3))
-        self.y_RK_SIT = np.empty(((self.n)+1,3))
+        self.y_RK_SIS = np.empty(((self.n)+1,3,3))
+        self.theo_SIS = np.empty(((self.n)+1,3,3))
+        self.y_RK_SIR = np.empty(((self.n)+1,3,3))
+        self.y_RK_SIT = np.empty(((self.n)+1,3,3))
         
         # plain Euler
-        self.y_pEu_SIS = np.empty(((self.n)+1,3))
-        self.y_pEu_SIR = np.empty(((self.n)+1,3))
-        self.y_pEu_SIT = np.empty(((self.n)+1,3))
+        self.y_pEu_SIS = np.empty(((self.n)+1,3,3))
+        self.y_pEu_SIR = np.empty(((self.n)+1,3,3))
+        self.y_pEu_SIT = np.empty(((self.n)+1,3,3))
         
         # other Euler TODO
         
@@ -54,32 +56,50 @@ class Disease:
     # S = pop[0], I = pop[1], R = pop[2], pop means population
 
     ## SIS model: (time, population) 
-    def SIS_model(self, t, pop):
-        return np.array([-self.beta*pop[0]*pop[1]/self.N + self.alpha*pop[1], 
-                         self.beta*pop[0]*pop[1]/self.N  - self.alpha*pop[1], 0]) 
-    # added a zero as third place to prepare for three variables for the other 
-    #models and generalize runge kutta
-    
-    ## SIR model:
-    def SIR_model(self, t, pop):
-        return np.array([-self.beta*pop[0]*pop[1]/self.N - self.gamma*pop[0], 
-                         self.beta*pop[0]*pop[1]/self.N  - self.alpha*pop[1], 
-                         self.gamma*pop[0] + self.alpha*pop[1]])
-    
-    ## SIR model with travel:
-    def SIT_model(self, t, pop):
-            return #TO DO
+    def SIS_model(self,t, pop):
+        pop0 = np.array([-self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] + self.alpha*pop[0,1], self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] - self.alpha*pop[0,1], 0]) # added a zero as third place to prepare for three variables for the other models and generalize runge kutta
+        pop1 = np.array([0,0,0])
+        pop2 = np.array([0,0,0])
+        return np.array([pop0, pop1, pop2])
+
+## SIR model:
+    def SIR_model(self,t, pop):
+        pop0 = np.array([-self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] - self.gamma[0]*pop[0,0], self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0]  - self.alpha*pop[0,1], self.gamma[0]*pop[0,0] + self.alpha*pop[0,1]])
+        pop1 = np.array([0,0,0])
+        pop2 = np.array([0,0,0])
+        return np.array([pop0, pop1, pop2]) 
+
+## SIR model with travel: #Hier Matrix
+    def SIT_model(self,t, pop):
+            pop0 = np.array([-self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] - self.gamma[0]*pop[0,0] +   (self.W[0,1]*pop[1,0] + self.W[0,2]*pop[2,0])-(self.W[1,0] + self.W[2,0])*pop[0,0], 
+                                self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0]  - self.alpha*pop[0,1]+    (self.W[0,1]*pop[1,1] + self.W[0,2]*pop[2,1])-(self.W[1,0] + self.W[2,0])*pop[0,1], 
+                                    self.gamma[0]*pop[0,0] + self.alpha*pop[0,1] +              (self.W[0,1]*pop[1,2] + self.W[0,2]*pop[2,2])-(self.W[1,0] + self.W[2,0])*pop[0,2]])
+            
+            pop1 = np.array([-self.beta[1]*pop[1,0]*pop[1,1]/self.N_i[1] - self.gamma[1]*pop[1,0] + (self.W[1,0]*pop[0,0] +self.W[1,2]*pop[2,0])-(self.W[0,1] + self.W[2,1])*pop[1,0], 
+                                self.beta[1]*pop[1,0]*pop[1,1]/self.N_i[1]  - self.alpha*pop[1,1]+  (self.W[1,0]*pop[0,1] + self.W[1,2]*pop[2,1])-(self.W[0,1] + self.W[2,1])*pop[1,1], 
+                                                self.gamma[1]*pop[1,0] + self.alpha*pop[1,1] + (self.W[1,0]*pop[0,2] + self.W[1,2]*pop[2,2])-(self.W[0,1] + self.W[2,1])*pop[1,2]])
+            
+            pop2 = np.array([-self.beta[2]*pop[2,0]*pop[2,1]/self.N_i[2] - self.gamma[2]*pop[2,0] + (self.W[2,0]*pop[0,0] + self.W[2,1]*pop[1,0])-(self.W[0,2] + self.W[1,2])*pop[2,0], 
+                                self.beta[2]*pop[2,0]*pop[2,1]/self.N_i[2]  - self.alpha*pop[2,1]+  (self.W[2,0]*pop[0,1] + self.W[2,1]*pop[1,1])-(self.W[0,2] + self.W[1,2])*pop[2,1], 
+                                                self.gamma[2]*pop[2,0] + self.alpha*pop[2,1] + (self.W[2,0]*pop[0,2] + self.W[2,1]*pop[1,2])-(self.W[0,2] + self.W[1,2])*pop[2,2]])
+            
+
+            return np.array([pop0, pop1, pop2]) 
+
     
     # Runge Kutta Step (start time, pop, model) 
     def RungeKuttaStep(self, t, y, model): #y == pop
         
         # Overall of people:
-        n = sum(y) # Number of people has to stay the same all time
+        n = round(sum(y[0]) +sum(y[1]) +sum(y[2]), 0) # Number of people has to stay the same all time
 
         # ALgorithm stops if overall population changes (TODO: maybe has to be changed)
         if round(n,0) != self.N:
              print('Population number changed')
              exit()
+        
+        #Number people different cities
+        self.N_i = np.array([round(sum(y[0]),0), round(sum(y[1]),0) , round(sum(y[2]), 0)])
 
         # Calculation of slopes (k_i are 1 X 3 vectors, where the last row is always zero in case of SIS model) 
         k1,k2,k3,k4 = 0,0,0,0
@@ -161,14 +181,17 @@ class Disease:
             self.y_pEu_SIS[0] = y0
             
             for i in range(1, (self.n)+1):
+                #Number people different cities
+                self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIS[i] = self.y_pEu_SIS[i-1] + self.h * self.SIS_model(self.x[i-1], self.y_pEu_SIS[i-1])
         
         elif model == "SIR_model":
-            
             y0 = self.population_0 
             self.y_pEu_SIR[0] = y0
             
             for i in range(1, (self.n)+1):
+                #Number people different cities
+                self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIR[i] = self.y_pEu_SIR[i-1] + self.h * self.SIR_model(self.x[i-1], self.y_pEu_SIR[i-1])
         
         elif model == "SIT_model":
@@ -177,20 +200,22 @@ class Disease:
             self.y_pEu_SIT[0] = y0
             
             for i in range(1, (self.n)+1):
+                #Number people different cities
+                self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIT[i] = self.y_pEu_SIT[i-1] + self.h * self.SIT_model(self.x[i-1], self.y_pEu_SIT[i-1])
     
         
     def Theo_SIS_model(self):
                         
-        self.theo_SIS[0]  = self.population_0
+        self.theo_SIS[0]  = self.population_0[0]
 
-        I_inf = self.N*(1-self.alpha/self.beta)
-        r = I_inf/self.population_0[1] -1
-        delta = self.beta - self.alpha
+        I_inf = sum(self.population_0[0])*(1-self.alpha/self.beta[0])
+        r = I_inf/self.population_0[0,1] -1
+        delta = self.beta[0] - self.alpha
 
         for i in range(1,len(self.theo_SIS)): 
-            I_i = I_inf/(1 + r*np.exp(delta*self.x[i]))
-            self.theo_SIS[i] = [ self.N - I_i, I_i , 0]
+            I_i = I_inf/(1 + r*np.exp(-delta*self.x[i]))
+            self.theo_SIS[i] = np.array([sum(self.population_0[0]) - I_i, I_i , 0])
 
  
 #includes several results in the same figure  
@@ -204,15 +229,18 @@ def plot(xs, ys, labels, colors, linestyles, title, xlabel, ylabel):
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    ax.grid(True)
     
     for line in range(len(xs)):
         ax.plot(xs[line], ys[line], label = labels[line], 
                 color = colors[line], linestyle = linestyles[line])
-        
-    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')    
-    #ax.grid()
+    ax.set_xlim(xs[0][0], xs[0][-1])
+    ax.legend()      
+      
+    fig.tight_layout()    
+    plt.savefig(save_title + '.pdf') 
     plt.show()
-    plt.savefig(title)       
+      
 
 if __name__ == '__main__':
     
@@ -256,10 +284,11 @@ if __name__ == '__main__':
     test1.Theo_SIS_model()
     
     title = "S(t) and I(t) on SIS: RK, Euler and theo vs days"
+    save_title = "SIS"
     
-    y_axis = [test1.y_RK_SIS[:,0], test1.y_RK_SIS[:,1], 
-              test1.y_pEu_SIS[:,0], test1.y_pEu_SIS[:,1],
-              test1.theo_SIS[:,0], test1.theo_SIS[:,1]]
+    y_axis = [test1.y_RK_SIS[:,0,0], test1.y_RK_SIS[:,0,1], 
+              test1.y_pEu_SIS[:,0,0], test1.y_pEu_SIS[:,0,1],
+              test1.theo_SIS[:,0,0], test1.theo_SIS[:,0,1]]
     
     labels = [RK_la[0], RK_la[1], pEu_la[0], pEu_la[1], theo_la[0], theo_la[1]]
     colors = [S_co, I_co, S_co, I_co, S_co, I_co]
@@ -267,7 +296,7 @@ if __name__ == '__main__':
     
     x_axis = [test1.x for i in range(len(y_axis))]
     
-    plot(x_axis, y_axis, labels, colors, linestyles, title, "days", "population")
+    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
     
     ###########################################################################
     #2nd Jacob's plot
@@ -277,14 +306,36 @@ if __name__ == '__main__':
     test1.RungeKuttaLoop(model)
     
     title = "S(t), I(t) and R(t) on SIR: RK vs days"
+    save_title = "SIR"
     
-    y_axis = [test1.y_RK_SIR[:,0], test1.y_RK_SIR[:,1], test1.y_RK_SIR[:,2]]
+    y_axis = [test1.y_RK_SIR[:,0,0], test1.y_RK_SIR[:,0,1], test1.y_RK_SIR[:,0,2]]
     
     labels = [RK_la[0], RK_la[1], RK_la[2]]
     colors = [S_co, I_co, R_co]
     linestyles = [RK_ls, RK_ls, RK_ls]
     
-    x_axis = [test1.x, test1.x, test1.x]
+    x_axis = [test1.x for i in range(len(y_axis))]
     
-    plot(x_axis, y_axis, labels, colors, linestyles, title, "days", "population")
+    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+
+    ###############################################################################
+    #3nd Travel
+    #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities
+    model = "SIT_model"
     
+    test1.RungeKuttaLoop(model)
+    
+    title = "S(t), I(t) and R(t) on SIT: RK vs days"
+    save_title = "SIT"
+    
+    y_axis = [test1.y_RK_SIT[:,0,0], test1.y_RK_SIT[:,0,1], test1.y_RK_SIT[:,0,2],
+              test1.y_RK_SIT[:,1,0], test1.y_RK_SIT[:,1,1], test1.y_RK_SIT[:,1,2],
+              test1.y_RK_SIT[:,2,0], test1.y_RK_SIT[:,2,1], test1.y_RK_SIT[:,2,2]]
+    
+    labels = [RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2]]
+    colors = [S_co, I_co, R_co,S_co, I_co, R_co,S_co, I_co, R_co]
+    linestyles = [RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls]
+    
+    x_axis = [test1.x for i in range(len(y_axis))]
+    
+    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")

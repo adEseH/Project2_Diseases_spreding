@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class Disease:
     def __init__(self, a=1/9, b=0.21, g=0, 
                  W=np.array([[0,0.53,2.4],[0.93,0,0.3],[8.2,0.58,0]])*10E-4,
-                 pop_0=np.array([7E6,100,0]), T=200, h=1 ):
+                 T=200, pop_0=np.array([7E6,100,0]), h=1 ):
         
         self.alpha = a
         self.beta = b
@@ -26,8 +26,7 @@ class Disease:
         
         #Euler & RK parameters
         self.h = h # step size [default: 1 day]
-        # Number of timesteps and proof if h_step and overall number gives a whole number of time steps.
-        # [X] This used to be in RungeKuttaLoop, but I need it for Euler as well
+        # Number of timesteps and proof if h_step and overall number gives a whole number of time steps
         self.n = self.T/self.h
         if self.n != int(self.n):                  
             print('Take another overall time pls.')
@@ -38,7 +37,7 @@ class Disease:
         self.x = np.linspace(self.t0, self.T, (self.n)+1) #array of times
         # RK
         self.y_RK_SIS = np.empty(((self.n)+1,3))
-        self.theo_RK_SIS = np.empty(((self.n)+1,3))
+        self.theo_SIS = np.empty(((self.n)+1,3))
         self.y_RK_SIR = np.empty(((self.n)+1,3))
         self.y_RK_SIT = np.empty(((self.n)+1,3))
         
@@ -179,20 +178,19 @@ class Disease:
             
             for i in range(1, (self.n)+1):
                 self.y_pEu_SIT[i] = self.y_pEu_SIT[i-1] + self.h * self.SIT_model(self.x[i-1], self.y_pEu_SIT[i-1])
+    
         
-            
-    #[] where does this come from? It is a great idea!
     def Theo_SIS_model(self):
                         
-        self.theo_RK_SIS[0]  = self.population_0
+        self.theo_SIS[0]  = self.population_0
 
         I_inf = self.N*(1-self.alpha/self.beta)
         r = I_inf/self.population_0[1] -1
         delta = self.beta - self.alpha
 
-        for i in range(1,len(self.theo_RK_SIS)): 
+        for i in range(1,len(self.theo_SIS)): 
             I_i = I_inf/(1 + r*np.exp(delta*self.x[i]))
-            self.theo_RK_SIS[i] = [ self.N - I_i, I_i , 0]
+            self.theo_SIS[i] = [ self.N - I_i, I_i , 0]
 
  
 #includes several results in the same figure  
@@ -200,7 +198,7 @@ class Disease:
 # ys is a list of y-type lists   
 #labels is the list of labels, one label per each line in the plot  
 # xlabel and ylabel refer to the whole plot     
-def plot(xs, ys, labels, title, xlabel, ylabel):
+def plot(xs, ys, labels, colors, linestyles, title, xlabel, ylabel):
     plt.style.use('rc.mplstyle')
     fig, ax = plt.subplots(figsize = (3,4))
     ax.set_title(title)
@@ -208,8 +206,85 @@ def plot(xs, ys, labels, title, xlabel, ylabel):
     ax.set_ylabel(ylabel)
     
     for line in range(len(xs)):
-        ax.plot(xs[line], ys[line], label = labels[line])
+        ax.plot(xs[line], ys[line], label = labels[line], 
+                color = colors[line], linestyle = linestyles[line])
         
-    ax.legend()
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')    
+    #ax.grid()
     plt.show()
     plt.savefig(title)       
+
+if __name__ == '__main__':
+    
+   
+    #Styles for plots with different methods and population types (same model asumed)
+   
+    #S(t) -> yellow
+    #I(t) -> red
+    #R(t) -> green 
+   
+    #RK -> solid line
+    #Euler -> dashed line
+    #theo -> dotted line
+    
+    #co for colour
+    S_co = "purple"
+    I_co = "red"
+    R_co = "green"
+    
+    #ls for linestyle
+    RK_ls = "-"
+    pEu_ls = "--"
+    theo_ls = ":"
+    
+    #la for labels, order is S, I, R
+    RK_la = ("RK4 $S(t)$", "RK4 $I(t)$", "RK4 $R(t)$")
+    pEu_la = ("Eu $S(t)$", "Eu $I(t)$", "Eu $R(t)$")
+    theo_la = ("exact $S(t)$", "exact $I(t)$", "exact $R(t)$")
+    
+    
+    #test 1:
+    test1 = Disease()
+    
+    ###########################################################################
+    #1st Jacob's plot
+    #plot S(t) and I(t) on SIS: RK, Euler and theo vs days
+    model = "SIS_model"
+    
+    test1.RungeKuttaLoop(model)
+    test1.Euler(model)
+    test1.Theo_SIS_model()
+    
+    title = "S(t) and I(t) on SIS: RK, Euler and theo vs days"
+    
+    y_axis = [test1.y_RK_SIS[:,0], test1.y_RK_SIS[:,1], 
+              test1.y_pEu_SIS[:,0], test1.y_pEu_SIS[:,1],
+              test1.theo_SIS[:,0], test1.theo_SIS[:,1]]
+    
+    labels = [RK_la[0], RK_la[1], pEu_la[0], pEu_la[1], theo_la[0], theo_la[1]]
+    colors = [S_co, I_co, S_co, I_co, S_co, I_co]
+    linestyles = [RK_ls, RK_ls, pEu_ls, pEu_ls, theo_ls, theo_ls]
+    
+    x_axis = [test1.x for i in range(len(y_axis))]
+    
+    plot(x_axis, y_axis, labels, colors, linestyles, title, "days", "population")
+    
+    ###########################################################################
+    #2nd Jacob's plot
+    #plot S(t), I(t) and R(t) on SIR: RK vs days
+    model = "SIR_model"
+    
+    test1.RungeKuttaLoop(model)
+    
+    title = "S(t), I(t) and R(t) on SIR: RK vs days"
+    
+    y_axis = [test1.y_RK_SIR[:,0], test1.y_RK_SIR[:,1], test1.y_RK_SIR[:,2]]
+    
+    labels = [RK_la[0], RK_la[1], RK_la[2]]
+    colors = [S_co, I_co, R_co]
+    linestyles = [RK_ls, RK_ls, RK_ls]
+    
+    x_axis = [test1.x, test1.x, test1.x]
+    
+    plot(x_axis, y_axis, labels, colors, linestyles, title, "days", "population")
+    

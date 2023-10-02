@@ -8,17 +8,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Disease:
-    def __init__(self, a=1/9, b=[0.21,0.26,0.24], g=[0,0,0], 
+    def __init__(self,T=200, a=1/9, b= [0.21,0.26,0.21], g = [0,0,0],
                  W=np.array([[0.0, 5.27324458E-05 ,2.38237046E-04],
                             [9.28720687E-05 ,0.0 ,2.97796307E-05],
                             [8.17828665E-04, 5.80450430E-05 ,0.0]]),
-                 T=200, pop_0=np.array([[6.7E6,10,0],[11.8E6,0,0], [23E6,0,0]]), h=1 ):
+                         pop_0=np.array([[6.7E6,10,0],[11.8E6,0,0], [23E6,0,0]]), h=1 ):
         
-        self.alpha = a
-        self.beta = b
-        self.gamma = g
-        # Transport matrix: [default as in Jakobs example]
-        self.W = W
+        # initialise gamma_arrays: (standart: constant values)
+        if True:
+            self.alpha = a
+            self.beta_array= np.array([np.repeat(b[0], T),np.repeat(b[1], T),np.repeat(b[2], T)])
+            self.gamma_array = g= np.array([np.repeat(g[0], T),np.repeat(g[1], T),np.repeat(g[2], T)])
+            
+
+        else:
+            print('Change to Standoart')
+            #TODO: QUARANTINE, VaCCINATION TIME DEPENDENT
+
+        #initialise first values:
+        self.beta = self.beta_array[:,0]
+        self.gamma = self.gamma_array[:,0]
+
+        # Transport matrix: [default as in Jakobs example] - TODO
+        if True:
+            self.W = W
+        
+        else: #Eigene Transportmatrix
+            print('Change to standart')
         
         # Time and population 
         self.t0 = 0
@@ -146,6 +162,8 @@ class Disease:
             self.y_RK_SIS[0] = y0
             
             for i in range(1, (self.n)+1):
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 self.y_RK_SIS[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIS[i-1], model)
                 
         elif model == "SIR_model":
@@ -154,6 +172,8 @@ class Disease:
             self.y_RK_SIR[0] = y0
             
             for i in range(1, (self.n)+1):
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 self.y_RK_SIR[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIR[i-1], model)
         
         elif model == "SIT_model":
@@ -162,6 +182,8 @@ class Disease:
             self.y_RK_SIT[0] = y0
             
             for i in range(1, (self.n)+1):
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 self.y_RK_SIT[i] = self.RungeKuttaStep(self.x[i-1], self.y_RK_SIT[i-1], model)
         
     
@@ -181,6 +203,9 @@ class Disease:
             self.y_pEu_SIS[0] = y0
             
             for i in range(1, (self.n)+1):
+                # Time Dependence Beta and gamma
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 #Number people different cities
                 self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIS[i] = self.y_pEu_SIS[i-1] + self.h * self.SIS_model(self.x[i-1], self.y_pEu_SIS[i-1])
@@ -190,6 +215,9 @@ class Disease:
             self.y_pEu_SIR[0] = y0
             
             for i in range(1, (self.n)+1):
+                # Time Dependence Beta and gamma
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 #Number people different cities
                 self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIR[i] = self.y_pEu_SIR[i-1] + self.h * self.SIR_model(self.x[i-1], self.y_pEu_SIR[i-1])
@@ -200,6 +228,9 @@ class Disease:
             self.y_pEu_SIT[0] = y0
             
             for i in range(1, (self.n)+1):
+                #Time Dependence beta and gamma
+                self.beta = self.beta_array[:,i-1]
+                self.gamma = self.gamma_array[:,i-1]
                 #Number people different cities
                 self.N_i = np.array([round(sum(self.y_pEu_SIS[i-1,0]),0), round(sum(self.y_pEu_SIS[i-1,1]),0) , round(sum(self.y_pEu_SIS[i-1,2]), 0)])
                 self.y_pEu_SIT[i] = self.y_pEu_SIT[i-1] + self.h * self.SIT_model(self.x[i-1], self.y_pEu_SIT[i-1])
@@ -259,11 +290,16 @@ if __name__ == '__main__':
     S_co = "purple"
     I_co = "red"
     R_co = "green"
+
+    S_theo = "grey"
+    I_theo = "grey"
+
+    
     
     #ls for linestyle
     RK_ls = "-"
     pEu_ls = "--"
-    theo_ls = ":"
+    theo_ls =  '-.'
     
     #la for labels, order is S, I, R
     RK_la = ("RK4 $S(t)$", "RK4 $I(t)$", "RK4 $R(t)$")
@@ -275,67 +311,105 @@ if __name__ == '__main__':
     test1 = Disease()
     
     ###########################################################################
-    #1st Jacob's plot
-    #plot S(t) and I(t) on SIS: RK, Euler and theo vs days
-    model = "SIS_model"
-    
-    test1.RungeKuttaLoop(model)
-    test1.Euler(model)
-    test1.Theo_SIS_model()
-    
-    title = "S(t) and I(t) on SIS: RK, Euler and theo vs days"
-    save_title = "SIS"
-    
-    y_axis = [test1.y_RK_SIS[:,0,0], test1.y_RK_SIS[:,0,1], 
-              test1.y_pEu_SIS[:,0,0], test1.y_pEu_SIS[:,0,1],
-              test1.theo_SIS[:,0,0], test1.theo_SIS[:,0,1]]
-    
-    labels = [RK_la[0], RK_la[1], pEu_la[0], pEu_la[1], theo_la[0], theo_la[1]]
-    colors = [S_co, I_co, S_co, I_co, S_co, I_co]
-    linestyles = [RK_ls, RK_ls, pEu_ls, pEu_ls, theo_ls, theo_ls]
-    
-    x_axis = [test1.x for i in range(len(y_axis))]
-    
-    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+
+    if True:
+        #1st Jacob's plot
+        #plot S(t) and I(t) on SIS: RK, Euler and theo vs days
+        model = "SIS_model"
+        
+        test1.RungeKuttaLoop(model)
+        test1.Euler(model)
+        test1.Theo_SIS_model()
+        
+        title = "S(t) and I(t) on SIS: RK, Euler and theo vs days"
+        save_title = "SIS"
+        
+        y_axis = [test1.y_RK_SIS[:,0,0], test1.y_RK_SIS[:,0,1], 
+                test1.y_pEu_SIS[:,0,0], test1.y_pEu_SIS[:,0,1],
+                test1.theo_SIS[:,0,0], test1.theo_SIS[:,0,1]]
+        
+        labels = [RK_la[0], RK_la[1], pEu_la[0], pEu_la[1], theo_la[0], theo_la[1]]
+        colors = [S_co, I_co, S_co, I_co, S_theo, I_theo]
+        linestyles = [RK_ls, RK_ls, pEu_ls, pEu_ls, theo_ls, theo_ls]
+        
+        x_axis = [test1.x for i in range(len(y_axis))]
+        
+        plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
     
     ###########################################################################
     #2nd Jacob's plot
     #plot S(t), I(t) and R(t) on SIR: RK vs days
-    model = "SIR_model"
-    
-    test1.RungeKuttaLoop(model)
-    
-    title = "S(t), I(t) and R(t) on SIR: RK vs days"
-    save_title = "SIR"
-    
-    y_axis = [test1.y_RK_SIR[:,0,0], test1.y_RK_SIR[:,0,1], test1.y_RK_SIR[:,0,2]]
-    
-    labels = [RK_la[0], RK_la[1], RK_la[2]]
-    colors = [S_co, I_co, R_co]
-    linestyles = [RK_ls, RK_ls, RK_ls]
-    
-    x_axis = [test1.x for i in range(len(y_axis))]
-    
-    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+    if True:
+        model = "SIR_model"
+        
+        test1.RungeKuttaLoop(model)
+        
+        title = "S(t), I(t) and R(t) on SIR: RK vs days"
+        save_title = "SIR"
+        
+        y_axis = [test1.y_RK_SIR[:,0,0], test1.y_RK_SIR[:,0,1], test1.y_RK_SIR[:,0,2]]
+        
+        labels = [RK_la[0], RK_la[1], RK_la[2]]
+        colors = [S_co, I_co, R_co]
+        linestyles = [RK_ls, RK_ls, RK_ls]
+        
+        x_axis = [test1.x for i in range(len(y_axis))]
+        
+        plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
 
     ###############################################################################
-    #3nd Travel
-    #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities
+
+    if False:
+        #3nd Travel
+        #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities
+        model = "SIT_model"
+        
+        test1.RungeKuttaLoop(model)
+        
+        title = "S(t), I(t) and R(t) on SIT: RK vs days"
+        save_title = "SIT"
+        
+        y_axis = [test1.y_RK_SIT[:,0,0], test1.y_RK_SIT[:,0,1], test1.y_RK_SIT[:,0,2],
+                test1.y_RK_SIT[:,1,0], test1.y_RK_SIT[:,1,1], test1.y_RK_SIT[:,1,2],
+                test1.y_RK_SIT[:,2,0], test1.y_RK_SIT[:,2,1], test1.y_RK_SIT[:,2,2]]
+        
+        labels = [RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2]]
+        colors = [S_co, I_co, R_co,S_co, I_co, R_co,S_co, I_co, R_co]
+        linestyles = [RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls]
+        
+        x_axis = [test1.x for i in range(len(y_axis))]
+        
+        plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+
+##############################################
+#3nd Travel
+#plot S(t), I(t) and R(t) on SIR: RK vs days for three cities - Subplots
+from matplotlib import rc
+rc('text', usetex=True)
+
+txt = [' (a)  City1', '(b)  City 2', '(c)  City 3'] ####### Cities
+if False:
     model = "SIT_model"
-    
     test1.RungeKuttaLoop(model)
-    
-    title = "S(t), I(t) and R(t) on SIT: RK vs days"
-    save_title = "SIT"
-    
-    y_axis = [test1.y_RK_SIT[:,0,0], test1.y_RK_SIT[:,0,1], test1.y_RK_SIT[:,0,2],
-              test1.y_RK_SIT[:,1,0], test1.y_RK_SIT[:,1,1], test1.y_RK_SIT[:,1,2],
-              test1.y_RK_SIT[:,2,0], test1.y_RK_SIT[:,2,1], test1.y_RK_SIT[:,2,2]]
-    
-    labels = [RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2],RK_la[0], RK_la[1], RK_la[2]]
-    colors = [S_co, I_co, R_co,S_co, I_co, R_co,S_co, I_co, R_co]
-    linestyles = [RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls,RK_ls, RK_ls, RK_ls]
-    
-    x_axis = [test1.x for i in range(len(y_axis))]
-    
-    plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+
+    plt.style.use('rc.mplstyle')
+    fig, ax = plt.subplots( ncols=3,figsize=(8, 4), layout='constrained')
+    fig.suptitle("S(t), I(t) and R(t) on SIT: RK vs days")
+
+    ax[0].set_ylabel("Population")
+    i = 0
+    for col in ax:
+        col.set_xlabel(r'\begin{center} Days \\\vspace{0.3cm}' + txt[i] + r'\end{center}')
+        col.grid(True)
+        #Plots
+        col.plot(test1.x, test1.y_RK_SIT[:,i,0], label = f'$S(t)$') 
+        col.plot(test1.x, test1.y_RK_SIT[:,i,1], label = f'$I(t)$')
+        col.plot(test1.x, test1.y_RK_SIT[:,i,2], label = f'$R(t)$')
+        #col.set_xticks(np.arange(test1.x[0], test1.x[-1], len(test1.x)/4))
+        col.legend()
+        col.set_xlim(test1.x[0], test1.x[-1])
+        i+= 1
+
+    fig.set_tight_layout(True)   
+    plt.savefig('SRT_3Plots.pdf') 
+    plt.show()

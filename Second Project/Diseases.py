@@ -10,28 +10,8 @@ import matplotlib.pyplot as plt
 #### City 1: Mexico City, City 2: Vancouver, City 3: New York
 
 class Disease:
-    def __init__(self,T=250, a=1/6, b= [0.287,0.267,0.283], g = [0.0021,0.0029, 0.0018],
-                 W=np.array([[0,0,0],
-                            [0,0,0],
-                            [0,0,0]]),
-                         pop_0=np.array([[19.985E6,4,0],[2.238E6,0,0], [18.309E6,0,0]]), h=1 ):
-        
-        # initialise gamma_arrays: (standart: constant values)
-        if False:
-            self.alpha = a
-            self.beta_array= np.array([np.repeat(b[0], T),np.repeat(b[1], T),np.repeat(b[2], T)])
-            self.gamma_array = g= np.array([np.repeat(g[0], T),np.repeat(g[1], T),np.repeat(g[2], T)])
-
-        else: # No vaccination
-            self.alpha = a
-            self.beta_array= np.array([np.repeat(b[0], T),np.repeat(b[1], T),np.repeat(b[2], T)])
-            self.gamma_array = g= np.array([np.repeat(0, T),np.repeat(0, T),np.repeat(0, T)])
-
-        print('T = ', T, 'beta = ' ,self.beta_array[:,0], 'gamma  = ', self.gamma_array[:,0], 'alpha = ', self.alpha)
-
-        #initialise first values:
-        self.beta = self.beta_array[:,0]
-        self.gamma = self.gamma_array[:,0]
+    def __init__(self,T=300, a=1/6, b = [0.287, 0.286,0.188],R0 = [2.5, 1.6, 1.74], g = [0.00253,0.0029, 0.0018],
+                         pop_0=np.array([[19.985E6,4,0],[2.238E6,1000,0], [18.309E6,1000,0]]), h=1 ):
         
         # Time and population 
         self.t0 = 0
@@ -39,13 +19,55 @@ class Disease:
         self.population_0 = pop_0 # inital population [S0, I0, R0] (y0)
         self.N = round(sum(pop_0[0]) +sum(pop_0[1]) +sum(pop_0[2]), 0) # Overall population
 
-        # Transport matrix: [default as in Jakobs example] - TODO
+        # initialise gamma_arrays: (standart: constant values over time)
         if False:
-            self.W = np.array([[0.0, 5.27324458E-05 ,2.38237046E-04],
-                            [9.28720687E-05 ,0.0 ,2.97796307E-05],
-                            [8.17828665E-04, 5.80450430E-05 ,0.0]])
+            self.alpha = a
+            # Calculation beta
+            b = [a*R0[0], a*R0[1], a*R0[2]]
+            self.beta_array= np.array([np.repeat(b[0], T/h),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
+            self.gamma_array = g= np.array([np.repeat(g[0], T/h),np.repeat(g[1], T/h),np.repeat(g[2], T/h)])
 
-        else: # Own traveling
+        # No vaccination/ quarantine/ travaling
+        elif False: # adapted values for mexico, PEAK FOR FIRST WAVE 
+            self.alpha = 1/6
+            #calculation beta
+            b = [a*R0[0], a*R0[1], a*R0[2]]
+            #self.beta_array= np.array([np.repeat(b[0], T/h),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
+            self.beta_array= np.array([np.repeat(b[0], T/h),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
+            self.gamma_array = g= np.array([np.repeat(0, T/h),np.repeat(0, T/h),np.repeat(0, T/h)])
+
+        elif True: # Quarantine in Mexico included, PEAK FOR FIRST WAVE  ### Recomments: R0 = 2.5, a = 1/6, infected = 100
+            if h == 1: 
+                R0 = [1.7, 1.6, 1.74]
+                self.alpha = 1/6
+                #calculation beta
+                b = [a*R0[0], a*R0[1], a*R0[2]]
+                b1 = np.repeat(b[0], 37)
+                b15= np.repeat(1.0*a, 3)
+                b2 = np.repeat(0.5*a,11)
+                b3 = np.repeat(1.1*a, T-(40 + 11))
+                self.beta_array= np.array([np.hstack((b1, b15, b2,b3)),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
+                self.gamma_array = g= np.array([np.repeat(0, T/h),np.repeat(0, T/h),np.repeat(0, T/h)])
+            else:
+                print('Set h = 1')
+
+        else: # No vaccination
+            self.alpha = a
+            self.beta_array= np.array([np.repeat(b[0], T/h),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
+            self.gamma_array = g= np.array([np.repeat(0, T/h),np.repeat(0, T/h),np.repeat(0, T/h)])
+
+        ## ToDo: TimeDependence over time
+
+        #print values
+        print('T = ', T, 'Population0 = ', pop_0, 'beta = ' ,self.beta_array[:,0], 'gamma  = ', self.gamma_array[:,0], 'alpha = ', self.alpha)
+
+        # initialise first values:
+        self.beta = self.beta_array[:,0]
+        self.gamma = self.gamma_array[:,0]
+
+        # Transport matrix: [default as in Jakobs example] - TODO
+        if False: # Traveling            
+            
             #calculating probabilities
             W_NM = 0.24*640E3*(pop_0[2,0]/308E6)/pop_0[2,0]
             W_NV = 0.11*0.8*2999.330/pop_0[2,0]
@@ -56,11 +78,20 @@ class Disease:
             W_VM = W_MV*pop_0[0,0]/pop_0[1,0]
 
             self.W = np.array([[0, W_VM, W_NM],[W_MV ,0, W_NV],[W_MN , W_VN,0]])
-        
+
+        elif True: # NO travaling
+            self.W = np.array([[0, 0, 0],[0,0, 0],[0 , 0,0]]) 
+
+        else: # Jakobs expample
+            self.W = np.array([[0.0, 5.27324458E-05 ,2.38237046E-04],
+                            [9.28720687E-05 ,0.0 ,2.97796307E-05],
+                            [8.17828665E-04, 5.80450430E-05 ,0.0]])
+
         print("W = ", self.W)
 
         #Euler & RK parameters
         self.h = h # step size [default: 1 day]
+
         # Number of timesteps and proof if h_step and overall number gives a whole number of time steps
         self.n = self.T/self.h
         if self.n != int(self.n):                  
@@ -97,12 +128,13 @@ class Disease:
 
 ## SIR model:
     def SIR_model(self,t, pop):
-        pop0 = np.array([-self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] - self.gamma[0]*pop[0,0], self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0]  - self.alpha*pop[0,1], self.gamma[0]*pop[0,0] + self.alpha*pop[0,1]])
+        i = 0  # Choose city (0 = Mexico City, 1 = Vancouver, 3 = New York)
+        pop0 = np.array([-self.beta[i]*pop[i,0]*pop[i,1]/self.N_i[i] - self.gamma[i]*pop[i,0], self.beta[i]*pop[i,0]*pop[i,1]/self.N_i[i]  - self.alpha*pop[i,1], self.gamma[i]*pop[i,0] + self.alpha*pop[i,1]])
         pop1 = np.array([0,0,0])
         pop2 = np.array([0,0,0])
         return np.array([pop0, pop1, pop2]) 
 
-## SIR model with travel: #Hier Matrix
+## SIR model with travel: 
     def SIT_model(self,t, pop):
             pop0 = np.array([-self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0] - self.gamma[0]*pop[0,0] +   (self.W[0,1]*pop[1,0] + self.W[0,2]*pop[2,0])-(self.W[1,0] + self.W[2,0])*pop[0,0], 
                                 self.beta[0]*pop[0,0]*pop[0,1]/self.N_i[0]  - self.alpha*pop[0,1]+    (self.W[0,1]*pop[1,1] + self.W[0,2]*pop[2,1])-(self.W[1,0] + self.W[2,0])*pop[0,1], 
@@ -126,7 +158,7 @@ class Disease:
         # Overall of people:
         n = round(sum(y[0]) +sum(y[1]) +sum(y[2]), 0) # Number of people has to stay the same all time
 
-        # ALgorithm stops if overall population changes (TODO: maybe has to be changed)
+        # ALgorithm stops if overall population changes  
         if round(n,0) != self.N:
              print('Population number changed')
              exit()
@@ -164,7 +196,7 @@ class Disease:
     
     
     # Runge Kutta Loop (model)
-    #y0 is population_0
+    # y0 is population_0
     def RungeKuttaLoop(self, model = "SIS_model"):  
         
         #checking that the model introduced is correct
@@ -329,8 +361,7 @@ if __name__ == '__main__':
     
     ###########################################################################
 
-    if True:
-        #1st Jacob's plot
+    if False: #SIS model
         #plot S(t) and I(t) on SIS: RK, Euler and theo vs days
         model = "SIS_model"
         
@@ -354,9 +385,9 @@ if __name__ == '__main__':
         plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
     
     ###########################################################################
-    #2nd Jacob's plot
+
     #plot S(t), I(t) and R(t) on SIR: RK vs days
-    if True:
+    if False: #SIS model - one plot (Mexico City)
         model = "SIR_model"
         
         test1.RungeKuttaLoop(model)
@@ -364,7 +395,7 @@ if __name__ == '__main__':
         title = "S(t), I(t) and R(t) on SIR: RK vs days"
         save_title = "SIR"
         
-        y_axis = [test1.y_RK_SIR[:,0,0], test1.y_RK_SIR[:,0,1], test1.y_RK_SIR[:,0,2]]
+        y_axis = [test1.y_RK_SIR[:,0,1]] #, test1.y_RK_SIR[:,0,1], test1.y_RK_SIR[:,0,2]]
         
         labels = [RK_la[0], RK_la[1], RK_la[2]]
         colors = [S_co, I_co, R_co]
@@ -376,8 +407,8 @@ if __name__ == '__main__':
 
     ###############################################################################
 
-    if True:
-        #3nd Travel
+    if False: #SIR with travel (one plot)
+
         #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities
         model = "SIT_model"
         
@@ -399,43 +430,42 @@ if __name__ == '__main__':
         plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
 
 ##############################################
-#3nd Travel
-#plot S(t), I(t) and R(t) on SIR: RK vs days for three cities - Subplots
-from matplotlib import rc
-rc('text', usetex=True)
 
-txt = [' (a)  Mexico City', '(b)  Vancouver', '(c)  New York City'] ####### Cities
+
+#plot S(t), I(t) and R(t) on SIR: RK vs days for three cities - Subplots
+
 if True:
+    from matplotlib import rc
+    rc('text', usetex=True)
+
+    # Cities
+    txt = [' (a)  Mexico City', '(b)  Vancouver', '(c)  New York City'] 
+
     model = "SIT_model"
     test1.RungeKuttaLoop(model)
 
     plt.style.use('rc.mplstyle')
-    fig, ax = plt.subplots( ncols=3,figsize=(5, 3))#, layout='constrained')
-
-# (ax0, ax1, ax2)
-
-    #fig.suptitle(f"$S(t)$, $I(t)$ and $R(t)$ on SIT: RK vs days")
+    fig, ax = plt.subplots( ncols=3,figsize=(5, 3))
 
     ax[0].set_ylabel("Population")
     i = 0
     for col in ax:
-        #col.set_xlabel(r'\begin{center} Days \\\vspace{0.3cm}' + txt[i] + r'\end{center}')
-        col.set_xlabel(r'Days')
+     
+        col.set_xlabel('Days')
         col.text(0.5, -0.3, txt[i], transform=col.transAxes, verticalalignment='top', horizontalalignment='center')
         col.grid(True)
+
         #Plots
-        col.plot(test1.x, test1.y_RK_SIT[:,i,0], label = f'$S(t)$', color = S_co) 
+        #col.plot(test1.x, test1.y_RK_SIT[:,i,0], label = f'$S(t)$', color = S_co) 
         col.plot(test1.x, test1.y_RK_SIT[:,i,1], label = f'$I(t)$', color = I_co)
-        col.plot(test1.x, test1.y_RK_SIT[:,i,2], label = f'$R(t)$', color = R_co)
+        #col.plot(test1.x, test1.y_RK_SIT[:,i,2], label = f'$R(t)$', color = R_co)
         #col.set_xticks(np.arange(test1.x[0], test1.x[-1], len(test1.x)/4))
         col.set_xlim(test1.x[0], test1.x[-1])
         i+= 1
 
-    #ax[1].legend(bbox_to_anchor=(0.5,1.06), loc='lower center', ncols=3)
     handles, labels = ax[0].get_legend_handles_labels()
     fig.legend(handles, labels, bbox_to_anchor=(0.5, 0.995), loc='upper center', ncols=3)
-
-    #fig.set_tight_layout(True)   
+  
     fig.subplots_adjust(wspace=0.28, left=0.1, right=0.97, top=0.82, bottom=0.25)
     plt.savefig('SRT_3Plots.pdf') 
     plt.show()

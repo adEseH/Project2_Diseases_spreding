@@ -4,7 +4,7 @@ font.family : StixGeneral
 mathtext.fontset : stix
 axes.grid : True
 axes.unicode_minus : True
-axes.prop_cycle : cycler('color', ['steelblue', 'salmon', 'yellowgreen', 'mediumorchid', 'mediumaquamarine', 'tan', 'palevioletred', 'mediumpurple', 'seagreen', 'magenta'])
+axes.prop_cycle : cycler('color', ['purple', 'red', 'green', 'steelblue', 'salmon', 'yellowgreen', 'mediumorchid', 'mediumaquamarine', 'tan', 'palevioletred', 'mediumpurple', 'seagreen', 'magenta'])
 xtick.labelsize : medium
 ytick.labelsize : medium
 grid.color : lightgrey

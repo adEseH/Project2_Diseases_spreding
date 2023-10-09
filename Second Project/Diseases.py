@@ -7,6 +7,7 @@ Created on Thu Sep 28 12:55:13 2023
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 #### City 1: Mexico City, City 2: Vancouver, City 3: New York
 
 class Disease:
@@ -34,7 +35,7 @@ class Disease:
             self.beta_array = np.array([np.repeat(b[0], T/h),np.repeat(b[1], T/h),np.repeat(b[2], T/h)])
             self.gamma_array =  np.array([np.repeat(g[0], T/h),np.repeat(g[1], T/h),np.repeat(g[2], T/h)])
 
-        elif True: # with vaccination, constant beta, gauss gamma
+        elif False: # with vaccination, constant beta, gauss gamma
             self.T = T
             self.alpha = 1/6
             T_vec = np.arange(0,T,h)
@@ -164,8 +165,6 @@ class Disease:
         self.y_pEu_SIS = np.empty(((self.n)+1,3,3))
         self.y_pEu_SIR = np.empty(((self.n)+1,3,3))
         self.y_pEu_SIT = np.empty(((self.n)+1,3,3))
-        
-        # other Euler TODO
         
         
     ########## Equations for models (You can see that I wrote the equations into 
@@ -356,46 +355,62 @@ class Disease:
 # ys is a list of y-type lists   
 #labels is the list of labels, one label per each line in the plot  
 # xlabel and ylabel refer to the whole plot     
-    def plot(self, xs, ys, labels, colors, linestyles, title, xlabel, ylabel):
+def plot(xs, ys, labels, colors, linestyles, xlabel, ylabel):
 
-        plt.style.use('rc.mplstyle')
-
-        fig, ax = plt.subplots(figsize = (3,4))
-        ax.set_title(title)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        ax.grid(True)
-
+    plt.style.use('rc.mplstyle')
     
-        for line in range(len(xs)):
-            ax.plot(xs[line], ys[line], label = labels[line], 
-                    color = colors[line], linestyle = linestyles[line])
+    fig, ax = plt.subplots(figsize = (3.5,4.5))
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(True)
+    
+        
+    for line in range(len(xs)):
+        ax.plot(xs[line], ys[line], label = labels[line], 
+        color = colors[line], linestyle = linestyles[line])
         ax.set_xlim(xs[0][0], xs[0][-1])
+    
+    '''       
+    #Mexico Quarantäne
+    ax.text(0.22,0.78, f' $\\beta_1  $ = {self.R0[0]*self.a:.3f}\n $\\beta_2  $ = {0.4*self.a:.3f}\n $\\beta_3  $ = {0.9*self.a:.3f}\n$\\gamma  $ = {self.g[0]*self.a:.3f}',fontsize=9, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center', bbox=dict(facecolor='lightgrey', alpha=0.2, edgecolor='lightgrey'))
+    ax.vlines(x = 37, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'slategrey')
+    ax.vlines(x = 40, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'darkgrey')
+    ax.vlines(x = 51, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'darkgrey')
+    ax.vlines(x = 56, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'slategrey')
+    ax.text(0.22,0.45, f'$\\beta_1  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
+    ax.text(0.6,0.45, f'$\\beta_2  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
+    ax.text(0.85,0.45, f'$\\beta_3  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
+    '''        
+    
+    # const beta, gamma
+    #ax.text(0.22,0.55, f'$\\beta$ = {self.R0[0]*self.a:.3f}\n $\\gamma  $ = {self.g[0]*self.a:.3f}\n',fontsize=12, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
+            
+    # Gauss
+    #ax.text(0.22,0.3, f'$\\beta$ = {self.R0[0]*self.a:.3f}\n \t\t\t$\\gamma = 0.003 \cdot 180 \cdot N(90, 30)$ \n',fontsize=12, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
+    
+    ax.legend()      
+            
+    fig.tight_layout()   
+    #plt.legend(bbox_to_anchor=(0.0, 1.05), loc='lower left') 
+    plt.savefig(save_title + '.pdf', bbox_inches='tight') 
+    plt.show()
 
-        
-        #Mexico Quarantäne
-        ax.text(0.22,0.78, f' $\\beta_1  $ = {self.R0[0]*self.a:.3f}\n $\\beta_2  $ = {0.4*self.a:.3f}\n $\\beta_3  $ = {0.9*self.a:.3f}\n$\\gamma  $ = {self.g[0]*self.a:.3f}',fontsize=9, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center', bbox=dict(facecolor='lightgrey', alpha=0.2, edgecolor='lightgrey'))
-        ax.vlines(x = 37, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'slategrey')
-        ax.vlines(x = 40, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'darkgrey')
-        ax.vlines(x = 51, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'darkgrey')
-        ax.vlines(x = 56, ymin = 0, ymax = 1, transform=ax.get_xaxis_transform(), colors= 'slategrey')
-        ax.text(0.22,0.45, f'$\\beta_1  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
-        ax.text(0.6,0.45, f'$\\beta_2  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
-        ax.text(0.85,0.45, f'$\\beta_3  $ ',fontsize=10, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
-        
+ 
+#dt is the np array of soltionS with step size dt
+#2dt is the np array of soltionS with step size 2dt
+#m is the order of the algorythm in question
+#ges for global errors
+#mge is the maximum of all the global errors
+def est_gerror(dt, twodt, m):
+    #ges for every step n
+    ges = (dt[::2] - twodt)/(2**m - 1)
+    #mean le
+    mge = np.max(np.abs(ges))
+    
+    return (ges, mge)
 
-        # const beta, gamma
-        #ax.text(0.22,0.55, f'$\\beta$ = {self.R0[0]*self.a:.3f}\n $\\gamma  $ = {self.g[0]*self.a:.3f}\n',fontsize=12, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
-        
-        # Gauss
-        #ax.text(0.22,0.3, f'$\\beta$ = {self.R0[0]*self.a:.3f}\n \t\t\t$\\gamma = 0.003 \cdot 180 \cdot N(90, 30)$ \n',fontsize=12, transform=ax.transAxes, verticalalignment='top', horizontalalignment='center')
 
-        ax.legend()      
-        
-        fig.tight_layout()    
-        plt.savefig(save_title + '.pdf') 
-        plt.show()
-      
+     
 
 if __name__ == '__main__':
     
@@ -426,7 +441,7 @@ if __name__ == '__main__':
     theo_ls =  '-.'
     
     #la for labels, order is S, I, R
-    RK_la = ("$S(t)$", "$I(t)$", "$R(t)$")
+    RK_la = ("$RK4 S(t)$", "$RK4 I(t)$", "$RK4 R(t)$")
     pEu_la = ("Eu $S(t)$", "Eu $I(t)$", "Eu $R(t)$")
     theo_la = ("exact $S(t)$", "exact $I(t)$", "exact $R(t)$")
     
@@ -443,7 +458,7 @@ if __name__ == '__main__':
         test1.RungeKuttaLoop(model)
         test1.Euler(model)
         test1.Theo_SIS_model()
-        
+    
         title = "S(t) and I(t) on SIS: RK, Euler and theo vs days"
         save_title = "SIS"
         
@@ -460,9 +475,143 @@ if __name__ == '__main__':
         plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
     
     ###########################################################################
+    #SIS model
+    #plot S(t) and I(t) on SIS: RK, Euler WITH 3 STEPS and theo vs days
+    if False: 
+        model = "SIS_model"
 
+        #test 2:
+        test2 = Disease(h=1, T=170)
+        test2.RungeKuttaLoop(model)
+        test2.Euler(model)   
+        #test 3:
+        test3 = Disease(h=0.5, T=170)
+        test3.Euler(model)
+        #test4 4:
+        test4 = Disease(h=0.25, T=170)
+        test4.Euler(model)
+        test4.Theo_SIS_model()
+        
+        save_title = "SIS"
+        
+        y_axis = [test2.y_RK_SIS[:,0,0], test2.y_RK_SIS[:,0,1], 
+                test2.y_pEu_SIS[:,0,0], test2.y_pEu_SIS[:,0,1],
+                test3.y_pEu_SIS[:,0,0], test3.y_pEu_SIS[:,0,1],
+                test4.y_pEu_SIS[:,0,0], test4.y_pEu_SIS[:,0,1],
+                test4.theo_SIS[:,0,0], test4.theo_SIS[:,0,1]]
+        
+        h_la = (" $h = 1$"," $h = 0.5$", " $h = 0.25$")
+        
+        labels = [RK_la[0] + h_la[0], RK_la[1] + h_la[0], pEu_la[0]+ h_la[0], pEu_la[1]+ h_la[0], 
+                  pEu_la[0]+ h_la[1], pEu_la[1]+ h_la[1], 
+                  pEu_la[0]+ h_la[2], pEu_la[1]+ h_la[2], theo_la[0], theo_la[1],]
+    
+        colors = [S_co, I_co, "deeppink","gold",
+                  "mediumvioletred" ,"darkorange",
+                  S_co, I_co, "silver", "black"]
+        
+        linestyles = [RK_ls, RK_ls, pEu_ls, pEu_ls, 
+                      pEu_ls, pEu_ls,
+                      pEu_ls, pEu_ls,":", ":"]
+        
+        x_axis = []
+        for i in range(len(y_axis)):
+            if i < 4:
+                x_axis.append(test2.x)
+            elif i < 6:
+                x_axis.append(test3.x)
+            else:
+                x_axis.append(test4.x)
+        
+        save_title = "SIS_hs"
+        #plot(x_axis, y_axis, labels, colors, linestyles, "Days", "Population")
+    
+    ###########################################################################
+        #0) plot e_n vs days for S(t) and I(t) on SIS. EULER 
+        y_axis = [test2.y_pEu_SIS[:,0,0] - test4.theo_SIS[:,0,0][::4],
+                  test3.y_pEu_SIS[:,0,0][::2] - test4.theo_SIS[:,0,0][::4],
+                  test4.y_pEu_SIS[:,0,0][::4] - test4.theo_SIS[:,0,0][::4],
+                  test2.y_pEu_SIS[:,0,1] - test4.theo_SIS[:,0,1][::4],
+                  test3.y_pEu_SIS[:,0,1][::2] - test4.theo_SIS[:,0,1][::4],
+                  test4.y_pEu_SIS[:,0,1][::4] - test4.theo_SIS[:,0,1][::4]]
+        
+        h_la = (" $h = 1$"," $h = 0.5$", " $h = 0.25$")
+        labels = [pEu_la[0]+ h_la[0], pEu_la[0]+ h_la[1], pEu_la[0]+ h_la[2],  
+                  pEu_la[1]+ h_la[0], pEu_la[1]+ h_la[1], pEu_la[1]+ h_la[2]]
+        
+        colors = ["deeppink", "mediumvioletred", S_co,
+                  "gold", "darkorange", I_co]
+        
+        linestyles = [pEu_ls, pEu_ls, pEu_ls, pEu_ls, pEu_ls, pEu_ls]
+        
+        x_axis = [test2.x, test2.x, test2.x, test2.x, test2.x, test2.x]
+        
+        save_title = "SIS_errs_Eu"
+        #plot(x_axis, y_axis, labels, colors, linestyles, "Days", "$e_n$")
+        
+        #1) plot e_n vs days for S(t) and I(t) on SIS. RK
+        y_axis = [test2.y_RK_SIS[:,0,0] - test4.theo_SIS[:,0,0][::4],
+                   test2.y_RK_SIS[:,0,1] - test4.theo_SIS[:,0,1][::4]]
+        
+        labels = [RK_la[0]+ h_la[0], RK_la[1]+ h_la[0]]
+    
+        colors = ["purple", "red"]    
+        
+        linestyles = [RK_ls, RK_ls]
+        
+        x_axis = [test2.x, test2.x]
+        
+        save_title = "SIS_errs_RK"
+        #plot(x_axis, y_axis, labels, colors, linestyles, "Days", "$e_n$")
+        
+        #3) plot max(e_n) vs h for S(t) and I(t) on SIS. EULER (& RK?)
+        
+        
+        
+        y_axis = [[np.max(np.abs(test4.y_pEu_SIS[:,0,0][::4] - test4.theo_SIS[:,0,0][::4])),
+                   np.max(np.abs(test3.y_pEu_SIS[:,0,0][::2] - test4.theo_SIS[:,0,0][::4])),
+                   np.max(np.abs(test2.y_pEu_SIS[:,0,0] - test4.theo_SIS[:,0,0][::4]))],
+                  [np.max(np.abs(test4.y_pEu_SIS[:,0,1][::4] - test4.theo_SIS[:,0,1][::4])),
+                   np.max(np.abs(test3.y_pEu_SIS[:,0,1][::2] - test4.theo_SIS[:,0,1][::4])),
+                   np.max(np.abs(test2.y_pEu_SIS[:,0,1] - test4.theo_SIS[:,0,1][::4]))]]
+         
+        labels = ["Eu $S(t)$", "Eu $I(t)$"]
+    
+        colors = ["purple", "red"]   
+        
+        linestyles = ["-", pEu_ls] 
+        
+        x_axis = [[0.25, 0.5, 1], [0.25, 0.5, 1]]
+        
+        save_title = "SIS_Gerrs_Eu"
+        #plot(x_axis, y_axis, labels, colors, linestyles, "$h$", "e")
+        
+        #4) plot max(e_n) vs h for S(t) and I(t) on SIS. RK. h= 0.5 and 0.25 as well
+        test3.RungeKuttaLoop(model)
+        test4.RungeKuttaLoop(model)
+        
+        y_axis = [[np.max(np.abs(test4.y_RK_SIS[:,0,0][::4] - test4.theo_SIS[:,0,0][::4])),
+                   np.max(np.abs(test3.y_RK_SIS[:,0,0][::2] - test4.theo_SIS[:,0,0][::4])),
+                   np.max(np.abs(test2.y_RK_SIS[:,0,0] - test4.theo_SIS[:,0,0][::4]))],
+                  [np.max(np.abs(test4.y_RK_SIS[:,0,1][::4] - test4.theo_SIS[:,0,1][::4])),
+                   np.max(np.abs(test3.y_RK_SIS[:,0,1][::2] - test4.theo_SIS[:,0,1][::4])),
+                   np.max(np.abs(test2.y_RK_SIS[:,0,1] - test4.theo_SIS[:,0,1][::4]))]]
+         
+        labels = ["RK4 $S(t)$", "RK4 $I(t)$"]
+    
+        colors = ["purple", "red"]   
+        
+        linestyles = ["-", "--"] 
+        
+        x_axis = [[0.25, 0.5, 1], [0.25, 0.5, 1]]
+        
+        save_title = "SIS_Gerrs_RK"
+        plot(x_axis, y_axis, labels, colors, linestyles, "$h$", "e")
+    
+    
+    ###########################################################################
     #plot S(t), I(t) and R(t) on SIR: RK vs days
-    if False: #SIS model - one plot (Mexico City)
+    if False: #SIR model - one plot (Mexico City)
         model = "SIR_model"
         
         test1.RungeKuttaLoop(model)
@@ -479,10 +628,46 @@ if __name__ == '__main__':
         
         x_axis = [test1.x for i in range(len(y_axis))]
         
-        test1.plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
+        #test1.plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
 
     ###############################################################################
-
+    if True:#global errors and global error for plot 4.1a) constant infections and no vaccination
+        model = "SIR_model"
+        #I guess it is the else in the initialisation what applies?
+        #test 1 uses h=0.2?
+        #test 5 uses h=0.4
+        test1.RungeKuttaLoop(model)
+        test5 = Disease(h=0.4) 
+        test5.RungeKuttaLoop(model)
+        
+        m=4
+        
+        #S(t) is test1.y_RK_SIR[:,0,0]
+        #I(t) is test1.y_RK_SIR[:,0,1]
+        #R(t) is test1.y_RK_SIR[:,0,2]
+        
+        #est_gerror(dt, twodt, m)
+        
+        #I follow the SIR order
+        
+        S_est_gerror = est_gerror(test1.y_RK_SIR[:,0,0], test5.y_RK_SIR[:,0,0], m)
+        I_est_gerror = est_gerror(test1.y_RK_SIR[:,0,1], test5.y_RK_SIR[:,0,1], m)
+        R_est_gerror = est_gerror(test1.y_RK_SIR[:,0,2], test5.y_RK_SIR[:,0,2], m)
+        
+        y_axis = [S_est_gerror[0], I_est_gerror[0], R_est_gerror[0]]
+        
+        labels = [RK_la[0], RK_la[1], RK_la[2]]
+        colors = [S_co, I_co, R_co]
+        linestyles = [RK_ls, RK_ls, RK_ls]
+        
+        x_axis = [test5.x, test5.x, test5.x]
+        
+        save_title = "gerros_4.1.a"
+        plot(x_axis, y_axis, labels, colors, linestyles, "Days", "$e_n$")
+        
+        print(S_est_gerror[1], I_est_gerror[1], R_est_gerror[1])
+    
+    ###############################################################################
     if False: #SIR with travel (one plot)
 
         #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities
@@ -504,13 +689,13 @@ if __name__ == '__main__':
         x_axis = [test1.x for i in range(len(y_axis))]
         
         plot(x_axis, y_axis, labels, colors, linestyles, title, "Days", "Population")
-
+        
 ##############################################
 
 
 #plot S(t), I(t) and R(t) on SIR: RK vs days for three cities - Subplots
 
-if True:
+if False:
     from matplotlib import rc
     rc('text', usetex=True)
 
